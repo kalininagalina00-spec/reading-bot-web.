@@ -1,0 +1,218 @@
+# bot.py
+# Telegram Bot для диагностики чтения (7-12 лет)
+
+import logging
+import json
+from datetime import datetime
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
+from telegram.error import BadRequest
+
+# ============ ЛОГИРОВАНИЕ ============
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# ============ КОНФИГУРАЦИЯ ============
+BOT_TOKEN = "ВСТАВЬ_СВОЙ_ТОКЕН_ЗДЕСЬ"
+WEB_APP_URL = "https://yourdomain.com/app/index.html"  # Заменить на реальный URL
+
+# ============ ДАННЫЕ В ПАМЯТИ ============
+user_sessions = {}
+
+# ============ КОМАНДА /START ============
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Главное меню"""
+    user_id = update.effective_user.id
+    first_name = update.effective_user.first_name or "Друг"
+    
+    # Инициализация сессии
+    if user_id not in user_sessions:
+        user_sessions[user_id] = {
+            "name": first_name,
+            "age": None,
+            "problem": None,
+            "day": 0,
+            "results": []
+        }
+    
+    keyboard = [
+        [InlineKeyboardButton(
+            "🚀 Начать диагностику",
+            web_app=WebAppInfo(url=WEB_APP_URL)
+        )],
+        [InlineKeyboardButton("📊 Мой прогресс", callback_data="progress")],
+        [InlineKeyboardButton("❓ Справка", callback_data="help")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    welcome_text = (
+        f"Привет, {first_name}! 👋\n\n"
+        "Добро пожаловать в курс **скорочтения**! 📚\n\n"
+        "Я помогу улучшить навыки чтения за 7 дней:\n"
+        "✅ Увеличу скорость чтения\n"
+        "✅ Уменьшу ошибки\n"
+        "✅ Улучшу внимание\n\n"
+        "Нажми кнопку ниже, чтобы начать диагностику! ⬇️"
+    )
+    
+    await update.message.reply_text(
+        welcome_text,
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+
+# ============ КОМАНДА /HELP ============
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Справка"""
+    help_text = (
+        "❓ **СПРАВКА**\n\n"
+        "**Как это работает:**\n"
+        "1️⃣ День 0: Диагностика (3 теста)\n"
+        "2️⃣ Дни 1-7: Упражнения по 15 минут\n"
+        "3️⃣ День 8: Финальный отчет\n\n"
+        "**Три теста диагностики:**\n"
+        "📖 Тест скорости чтения\n"
+        "🧠 Тест понимания текста\n"
+        "👀 Тест внимания (таблица Шульте)\n\n"
+        "**Результаты:**\n"
+        "✅ Персональный план\n"
+        "✅ Ежедневный контроль\n"
+        "✅ Адаптация сложности\n\n"
+        "**Время:** 15 минут в день\n"
+        "**Возраст:** 7-12 лет"
+    )
+    
+    await update.callback_query.answer()
+    await update.callback_query.edit_message_text(
+        help_text,
+        parse_mode="Markdown"
+    )
+
+# ============ ПРОГРЕСС ============
+async def progress(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показать прогресс"""
+    query = update.callback_query
+    user_id = query.from_user.id
+    
+    if user_id not in user_sessions:
+        await query.answer("Данные не найдены. Начни с /start")
+        return
+    
+    data = user_sessions[user_id]
+    results = data.get("results", [])
+    
+    if not results:
+        text = "📊 Прогресс пока пуст.\nНажми 🚀 Начать диагностику, чтобы запустить тесты!"
+    else:
+        first = results[0]
+        last = results[-1]
+        
+        speed_change = last.get("speed", 0) - first.get("speed", 0)
+        attention_change = first.get("attention", 0) - last.get("attention", 0)
+        
+        text = (
+            f"📊 **ТВОЙ ПРОГРЕСС**\n\n"
+            f"📅 День: {len(results)} из 7\n\n"
+            f"**День 1:**\n"
+            f"  📖 Скорость: {first.get('speed', 0)} слов/мин\n"
+            f"  🧠 Понимание: {first.get('understanding', 0)}/5\n"
+            f"  👀 Внимание: {first.get('attention', 0)} сек\n\n"
+            f"**День {len(results)}:**\n"
+            f"  📖 Скорость: {last.get('speed', 0)} слов/мин\n"
+            f"  🧠 Понимание: {last.get('understanding', 0)}/5\n"
+            f"  👀 Внимание: {last.get('attention', 0)} сек\n\n"
+            f"**📈 ПРОГРЕСС:**\n"
+            f"  Скорость: {speed_change:+.0f} слов/мин\n"
+            f"  Внимание: {attention_change:+.0f} сек"
+        )
+    
+    await query.answer()
+    await query.edit_message_text(text, parse_mode="Markdown")
+
+# ============ ПОЛУЧЕНИЕ ДАННЫХ С WEB APP ============
+async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Получить результаты тестирования с Web App"""
+    try:
+        user_id = update.effective_user.id
+        web_app_data = update.effective_message.web_app_data.data
+        data = json.loads(web_app_data)
+        
+        # Сохраняем данные
+        if user_id not in user_sessions:
+            user_sessions[user_id] = {
+                "name": update.effective_user.first_name,
+                "results": []
+            }
+        
+        user_sessions[user_id]["results"].append(data)
+        
+        # Формируем ответ
+        response_text = (
+            f"✅ **Результаты получены!**\n\n"
+            f"👤 {data.get('childName', 'Неизвестно')}\n"
+            f"🎂 Возраст: {data.get('age', '?')} лет\n\n"
+            f"📊 **Результаты теста:**\n"
+            f"📖 Скорость: {data.get('speed', 0)} слов/мин\n"
+            f"🧠 Понимание: {data.get('understanding', 0)}/5\n"
+            f"👀 Внимание: {data.get('attention', 0)} сек\n\n"
+            f"🎯 День: {data.get('day', 0)}\n"
+            f"⏰ Время: {datetime.now().strftime('%d.%m.%Y %H:%M')}\n\n"
+            f"✨ Отлично! Продолжай завтра! 🚀"
+        )
+        
+        await update.effective_message.reply_text(
+            response_text,
+            parse_mode="Markdown"
+        )
+        
+    except Exception as e:
+        logger.error(f"Ошибка при получении Web App данных: {e}")
+        await update.effective_message.reply_text(
+            "⚠️ Ошибка при сохранении результатов. Попробуй ещё раз."
+        )
+
+# ============ ОБРАБОТЧИК CALLBACK'ОВ ============
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка кнопок"""
+    query = update.callback_query
+    data = query.data
+    
+    if data == "help":
+        await help_cmd(update, context)
+    elif data == "progress":
+        await progress(update, context)
+    else:
+        await query.answer("Неизвестная команда")
+
+# ============ ГЛАВНАЯ ФУНКЦИЯ ============
+def main():
+    """Запуск бота"""
+    # Проверка токена
+    if BOT_TOKEN == "ВСТАВЬ_СВОЙ_ТОКЕН_ЗДЕСЬ":
+        logger.error("❌ Замени BOT_TOKEN на свой токен из @BotFather!")
+        return
+    
+    # Создание приложения
+    app = Application.builder().token(BOT_TOKEN).build()
+    
+    # Обработчики команд
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", lambda u, c: help_cmd(u, c)))
+    
+    # Обработчик Web App
+    app.add_handler(CommandHandler("web_app_data", handle_web_app_data))
+    
+    # Обработчик callback'ов
+    app.add_handler(CallbackQueryHandler(callback_handler))
+    
+    # Запуск
+    print("🤖 Бот запущен!")
+    print(f"📱 Найди своего бота и напиши /start")
+    
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
