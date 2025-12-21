@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Диагностика чтения | Скорочтение</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .radio-group,
+        .checkbox-group {
+            margin-top: 10px;
+        }
+
+        .radio-option,
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .text-display {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+            margin: 20px 0;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            color: #667eea;
+            margin: 30px 0;
+        }
+
+        .schulte-table {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+
+        .schulte-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            background: white;
+        }
+
+        .schulte-cell:hover {
+            background: #f0f0f0;
+        }
+
+        .schulte-cell.found {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        button {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .buttons button {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left-color: #1976d2;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .step-indicator {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .result-box {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- РАЗДЕЛ 1: ИНФОРМАЦИЯ -->
+        <div class="section active" id="section-1">
+            <h1>📚 Диагностика чтения</h1>
+            <p class="subtitle">Улучшим навыки чтения за 7 дней!</p>
+
+            <div class="alert alert-info">
+                <strong>ℹ️ Как это работает:</strong><br>
+                Три коротких теста (15 минут всего):<br>
+                1. Скорость чтения<br>
+                2. Понимание текста<br>
+                3. Внимание (таблица)
+            </div>
+
+            <div class="form-group">
+                <label>👤 Имя ребенка:</label>
+                <input type="text" id="childName" placeholder="Например: Ваня">
+            </div>
+
+            <div class="form-group">
+                <label>🎂 Возраст:</label>
+                <select id="childAge">
+                    <option value="">-- Выбери возраст --</option>
+                    <option value="7">7 лет (1 класс)</option>
+                    <option value="8">8 лет (2 класс)</option>
+                    <option value="9">9 лет (3 класс)</option>
+                    <option value="10">10 лет (4 класс)</option>
+                    <option value="11">11 лет (5 класс)</option>
+                    <option value="12">12 лет (6 класс)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>⚠️ Основная проблема:</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="problem" value="slow">
+                        🐢 Медленно читает
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="problem" value="errors">
+                        ❌ Много ошибок
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="problem" value="understanding">
+                        🤔 Плохо понимает
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="problem" value="attention">
+                        👀 Невнимателен
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="problem" value="all">
+                        🔴 Всё сразу
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="goToTest1()">🚀 Начать диагностику</button>
+        </div>
+
+        <!-- РАЗДЕЛ 2: ТЕСТ 1 (СКОРОСТЬ) -->
+        <div class="section" id="section-2">
+            <h1>📖 Тест 1: Скорость чтения</h1>
+            <p class="subtitle">Шаг 1 из 3</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 33%;"></div></div>
+
+            <div class="alert alert-info">
+                <strong>Инструкция:</strong><br>
+                Прочитай текст вслух за 1 минуту. Засекай время!
+            </div>
+
+            <div class="text-display">
+                Жила в лесу лиса. Она была ловкая и рыжая. Каждый день лиса охотилась на зайцев. Зайцы боялись лисы и быстро убегали в кусты. Однажды маленький зайчонок отстал от мамы. Он не видел дорогу домой. Зайчонок сидел под ёлкой и плакал. Вдруг услышал шаги. Это была лиса! Но лиса не хотела охотиться. Она была голодна и устала. Лиса увидела грустного зайчонка и подумала: "Бедный малыш". Вместо охоты лиса помогла зайчику найти дорогу домой.
+            </div>
+
+            <div class="form-group">
+                <label>⏱️ Сколько слов прочитано за 1 минуту?</label>
+                <input type="number" id="wordsRead" placeholder="Например: 50" min="0">
+            </div>
+
+            <div class="form-group">
+                <label>❌ Какие ошибки?</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-option">
+                        <input type="checkbox" name="errors" value="skip">
+                        Пропускал буквы
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" name="errors" value="replace">
+                        Переставлял буквы
+                    </label>
+                    <label class="checkbox-option">
+                        <input type="checkbox" name="errors" value="none">
+                        Без ошибок
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>📚 Как читал?</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="readStyle" value="syllable">
+                        По слогам (ло-ги-ка)
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="readStyle" value="words">
+                        Целыми словами (логика)
+                    </label>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn-secondary" onclick="goBack()">← Назад</button>
+                <button class="btn-primary" onclick="goToTest2()">Дальше →</button>
+            </div>
+        </div>
+
+        <!-- РАЗДЕЛ 3: ТЕСТ 2 (ПОНИМАНИЕ) -->
+        <div class="section" id="section-3">
+            <h1>🧠 Тест 2: Понимание</h1>
+            <p class="subtitle">Шаг 2 из 3</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 66%;"></div></div>
+
+            <div class="alert alert-info">
+                <strong>Ответь на 5 вопросов про прочитанный текст:</strong>
+            </div>
+
+            <div class="form-group">
+                <label>1️⃣ Кто была главная героиня?</label>
+                <input type="text" id="q1" placeholder="Ответ...">
+            </div>
+
+            <div class="form-group">
+                <label>2️⃣ Что произошло с зайчонком?</label>
+                <input type="text" id="q2" placeholder="Ответ...">
+            </div>
+
+            <div class="form-group">
+                <label>3️⃣ Где происходила история?</label>
+                <input type="text" id="q3" placeholder="Ответ...">
+            </div>
+
+            <div class="form-group">
+                <label>4️⃣ Почему лиса помогла зайчику?</label>
+                <input type="text" id="q4" placeholder="Ответ...">
+            </div>
+
+            <div class="form-group">
+                <label>5️⃣ Чем закончилась история?</label>
+                <input type="text" id="q5" placeholder="Ответ...">
+            </div>
+
+            <div class="buttons">
+                <button class="btn-secondary" onclick="goBack()">← Назад</button>
+                <button class="btn-primary" onclick="goToTest3()">Дальше →</button>
+            </div>
+        </div>
+
+        <!-- РАЗДЕЛ 4: ТЕСТ 3 (ВНИМАНИЕ) -->
+        <div class="section" id="section-4">
+            <h1>👀 Тест 3: Внимание</h1>
+            <p class="subtitle">Шаг 3 из 3</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
+
+            <div class="alert alert-info">
+                <strong>Найди цифры от 1 до 25 в порядке.</strong><br>
+                Не говори вслух, только нажимай на цифры!
+            </div>
+
+            <div class="timer" id="timer">⏱️ 00.0 сек</div>
+
+            <div class="schulte-table" id="schulteTable"></div>
+
+            <div class="buttons">
+                <button class="btn-primary" id="startBtn" onclick="startTimer()">▶️ Начать</button>
+                <button class="btn-primary" id="endBtn" onclick="endTimer()" disabled>⏹️ Конец</button>
+            </div>
+
+            <div class="buttons">
+                <button class="btn-secondary" onclick="goBack()">← Назад</button>
+                <button class="btn-primary" onclick="showResults()">✅ Завершить</button>
+            </div>
+        </div>
+
+        <!-- РАЗДЕЛ 5: РЕЗУЛЬТАТЫ -->
+        <div class="section" id="section-5">
+            <h1>📊 Результаты</h1>
+            <div id="resultsContent"></div>
+            <button class="btn-primary" onclick="sendResults()">📤 Отправить боту</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
