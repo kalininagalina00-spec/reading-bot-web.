@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Космическая математика — игра-бродилка</title>
+<style>
+/* ===== Космическая математика — стили ===== */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Trebuchet MS','Segoe UI',Verdana,Arial,sans-serif;
+  background:#0d1240;color:#fff;overflow:hidden;
+  user-select:none;-webkit-user-select:none;
+}
+button{font-family:inherit}
+.hidden{display:none!important}
+
+#app{height:100dvh;display:flex;flex-direction:column;position:relative}
+
+/* ===== Небо и декорации ===== */
+#sky{position:fixed;inset:0;z-index:0;overflow:hidden;background:
+  radial-gradient(900px 520px at 85% -6%, rgba(90,70,190,.45), transparent 62%),
+  radial-gradient(760px 420px at -6% 12%, rgba(96,42,140,.38), transparent 65%),
+  radial-gradient(1100px 620px at 50% 112%, rgba(40,70,190,.5), transparent 72%),
+  linear-gradient(180deg,#0c1140 0%,#131a52 45%,#1e2a72 100%)}
+#stars{position:absolute;inset:0}
+#stars i{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--tw,3s) ease-in-out infinite;animation-delay:var(--td,0s)}
+@keyframes twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+.galaxy{position:absolute;left:2%;top:4%;width:15%;height:9%;
+  background:radial-gradient(closest-side,rgba(215,225,255,.8),rgba(122,92,255,.35) 45%,transparent 72%);
+  transform:rotate(-24deg);border-radius:50%;filter:blur(2px)}
+.galaxy::after{content:'';position:absolute;left:50%;top:50%;width:22%;height:44%;transform:translate(-50%,-50%);
+  background:radial-gradient(closest-side,#fff,#c9d2ff 60%,transparent);border-radius:50%}
+.nebula{position:absolute;right:12%;top:38%;width:22%;height:18%;
+  background:radial-gradient(closest-side,rgba(233,88,180,.16),transparent 70%);filter:blur(6px)}
+.comet{position:absolute;top:9%;left:-6%;width:120px;height:26px;z-index:1;
+  animation:cometfly 26s linear infinite;opacity:.9}
+.comet i{position:absolute;right:0;top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#fff,#ffd9a0 70%);box-shadow:0 0 12px #ffe9c9}
+.comet::before{content:'';position:absolute;right:8px;top:50%;height:8px;width:110px;margin-top:-4px;
+  background:linear-gradient(90deg,transparent,#ffb45c99);border-radius:4px;transform:rotate(8deg)}
+@keyframes cometfly{0%{transform:translateX(-10vw) translateY(0)}50%{transform:translateX(55vw) translateY(3vh)}100%{transform:translateX(115vw) translateY(-1vh)}}
+.satellite{position:absolute;right:4%;top:5%;width:74px;height:34px;z-index:1;animation:satfloat 7s ease-in-out infinite alternate}
+.satellite .sat-body{position:absolute;left:50%;top:50%;width:16px;height:22px;transform:translate(-50%,-50%);
+  background:linear-gradient(180deg,#e8ecf4,#aab4c8);border-radius:6px;box-shadow:0 0 8px #fff3}
+.satellite .pan{position:absolute;top:50%;width:24px;height:16px;margin-top:-8px;border-radius:3px;
+  background:linear-gradient(135deg,#3d6fd8 0 50%,#7fa8ef 50% 100%);border:1px solid #cfe0ff88}
+.satellite .pl{left:2px}.satellite .pr{right:2px}
+@keyframes satfloat{from{transform:translateY(-4px) rotate(-3deg)}to{transform:translateY(5px) rotate(3deg)}}
+.ast{position:absolute;border-radius:46%;background:radial-gradient(circle at 35% 30%,#c8cfdd,#7e879e 75%);box-shadow:inset -2px -3px 4px #0004;z-index:1}
+.ast::after{content:'';position:absolute;left:28%;top:30%;width:26%;height:26%;border-radius:50%;background:#00000026}
+.ast.a1{left:20%;top:56%;width:14px;height:13px;transform:rotate(20deg)}
+.ast.a2{left:57%;top:60%;width:10px;height:9px;transform:rotate(-14deg);opacity:.8}
+.corner-planet{position:absolute;right:-3%;bottom:-4%;width:12%;aspect-ratio:1;border-radius:50%;z-index:1;
+  background:radial-gradient(circle at 32% 28%,#c99ef2,#8a4fd0 55%,#5c2f9e 100%)}
+.corner-planet::after{content:'';position:absolute;left:-14%;top:38%;width:128%;height:26%;border-radius:50%;
+  border:3px solid rgba(240,220,255,.55);transform:rotate(-14deg)}
+
+/* Поверхность луны снизу */
+.moon-ground{position:absolute;left:-5%;right:-5%;bottom:0;height:16%;z-index:1;pointer-events:none}
+.moon-ground .g1{position:absolute;left:-2%;right:34%;top:18%;height:200%;background:linear-gradient(180deg,#b9c1d4,#838ca8);border-radius:45% 55% 0 0/90% 65% 0 0}
+.moon-ground .g2{position:absolute;left:36%;right:-2%;top:36%;height:200%;background:linear-gradient(180deg,#cdd4e6,#949cb8);border-radius:55% 45% 0 0/70% 92% 0 0}
+.crater{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 32%,#9aa2bd,#7b839f 70%);box-shadow:inset 2px 3px 5px rgba(60,66,92,.55),inset -2px -2px 4px rgba(220,226,242,.5)}
+.crater.c1{left:10%;bottom:34%;width:6%;height:34%}
+.crater.c2{left:30%;bottom:52%;width:4.5%;height:26%}
+.crater.c3{right:26%;bottom:44%;width:5%;height:28%}
+.crater.c4{right:8%;bottom:40%;width:3.8%;height:22%}
+
+/* ===== HUD ===== */
+#hud{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px}
+.hud-title{display:flex;align-items:center;gap:8px;font-weight:800;font-size:clamp(14px,2.2vw,20px);letter-spacing:.4px;text-shadow:0 2px 8px rgba(0,0,0,.55)}
+.hud-title svg{width:clamp(20px,2.6vw,27px);height:auto;flex:none}
+.hud-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pill{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:clamp(12px,1.6vw,14.5px);font-weight:700;backdrop-filter:blur(4px)}
+.pill .dot{width:11px;height:11px;border-radius:50%;background:#e63946;box-shadow:0 0 6px #e6394688;flex:none}
+.pill .dot.blue{background:#2e7bff;box-shadow:0 0 6px #2e7bff88}
+.star-ic{width:17px;height:17px;filter:drop-shadow(0 0 3px #ffd25766)}
+#starsPill b{font-size:1.05em}
+.icon-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;cursor:pointer;display:grid;place-items:center;transition:transform .15s, background .15s;flex:none}
+.icon-btn svg{width:19px;height:19px}
+.icon-btn:hover{background:rgba(255,255,255,.2);transform:translateY(-1px)}
+
+/* ===== Поле ===== */
+#board-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative;z-index:10;padding:0 8px}
+#board{position:relative;aspect-ratio:1.62;width:min(100%,calc((100dvh - 205px) * 1.62));max-width:1500px}
+#paths,#planets{position:absolute;inset:0}
+.seg{position:absolute;height:3px;border-radius:3px;transform-origin:0 50%;z-index:1;opacity:.7;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.95) 0 9px,transparent 9px 17px)}
+
+/* Планеты */
+.planet{position:absolute;transform:translate(-50%,-50%);z-index:2;aspect-ratio:1;
+  width:calc(var(--u) * var(--s,5.5))}
+.planet .body{position:absolute;inset:0;border-radius:50%}
+.planet .body::after{content:'';position:absolute;inset:0;border-radius:50%;background:
+  radial-gradient(circle at 30% 26%,rgba(255,255,255,.55) 0 7%,rgba(255,255,255,.14) 22%,transparent 40%),
+  radial-gradient(circle at 72% 84%,rgba(8,8,40,.42) 0 20%,transparent 52%)}
+.planet .badge{position:absolute;left:50%;top:0;transform:translate(-50%,-52%);z-index:4;
+  width:calc(var(--u) * 2.05);aspect-ratio:1;border-radius:50%;background:var(--bc,#f0a63a);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:calc(var(--u) * 1.15);
+  border:2px solid rgba(255,255,255,.45);box-shadow:0 3px 8px rgba(0,0,0,.45);text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.planet .ring{position:absolute;left:50%;top:50%;width:175%;height:44%;transform:translate(-50%,-50%) rotate(-18deg);
+  border-radius:50%;border:calc(var(--u) * .42) solid var(--rc,#ffffffaa);z-index:3;pointer-events:none;
+  box-shadow:0 0 8px rgba(255,255,255,.15)}
+.planet.lit{filter:drop-shadow(0 0 10px rgba(255,215,110,.9))}
+.planet.lit .body{box-shadow:0 0 0 calc(var(--u)*.3) rgba(255,215,110,.55)}
+.planet{cursor:default}
+
+.t-moon .body{background:
+ radial-gradient(circle at 30% 32%,rgba(0,0,0,.16) 0 11%,transparent 12%),
+ radial-gradient(circle at 62% 55%,rgba(0,0,0,.14) 0 9%,transparent 10%),
+ radial-gradient(circle at 44% 74%,rgba(0,0,0,.16) 0 7%,transparent 8%),
+ radial-gradient(circle at 74% 26%,rgba(0,0,0,.1) 0 6%,transparent 7%),
+ radial-gradient(circle at 35% 30%,var(--c1),var(--c2) 85%)}
+.t-gas .body{background:repeating-linear-gradient(178deg,var(--c1) 0 15%,var(--c2) 15% 29%,var(--c1) 29% 45%,var(--c2) 45% 58%)}
+.t-jupiter .body{background:
+ radial-gradient(circle at 63% 64%,#a33d20 0 10%,rgba(196,85,46,.35) 11% 14%,transparent 15%),
+ repeating-linear-gradient(178deg,var(--c1) 0 13%,var(--c2) 13% 26%)}
+.t-mars .body{background:
+ radial-gradient(circle at 60% 40%,rgba(0,0,0,.15) 0 16%,transparent 17%),
+ radial-gradient(circle at 30% 62%,rgba(0,0,0,.12) 0 12%,transparent 13%),
+ radial-gradient(circle at 35% 30%,var(--c1),var(--c2) 85%)}
+.t-ocean .body{background:
+ radial-gradient(ellipse 30% 22% at 28% 34%,#46c46a 0 60%,transparent 66%),
+ radial-gradient(ellipse 24% 30% at 64% 58%,#46c46a 0 60%,transparent 66%),
+ radial-gradient(ellipse 18% 13% at 42% 72%,#46c46a 0 55%,transparent 62%),
+ radial-gradient(ellipse 34% 10% at 55% 16%,rgba(255,255,255,.7) 0 60%,transparent 70%),
+ radial-gradient(circle at 35% 30%,var(--c1),var(--c2) 85%)}
+.t-lava .body{background:
+ radial-gradient(circle at 50% 50%,#ff8c2a 0 4%,transparent 6%),
+ radial-gradient(circle at 32% 40%,#ff6a1f 0 6%,transparent 8%),
+ radial-gradient(circle at 68% 32%,#ff8c2a 0 5%,transparent 7%),
+ radial-gradient(circle at 58% 66%,#ffb13d 0 6%,transparent 8%),
+ radial-gradient(circle at 36% 72%,#ff6a1f 0 5%,transparent 7%),
+ radial-gradient(circle at 76% 58%,#ff8c2a 0 4%,transparent 6%),
+ radial-gradient(circle at 35% 30%,#5a4048,#1c1418 85%);
+ box-shadow:inset 0 0 16px rgba(255,106,31,.35)}
+.t-plain .body,.t-ring-t .body{background:radial-gradient(circle at 35% 30%,var(--c1),var(--c2) 85%)}
+.t-plain .body::before,.t-ring-t .body::before{content:'';position:absolute;left:18%;top:40%;width:60%;height:16%;
+  border-radius:50%;background:rgba(255,255,255,.22);transform:rotate(-12deg)}
+
+/* START */
+.start-node{position:absolute;transform:translate(-50%,-42%);z-index:3}
+.start-node .sign{position:relative;background:linear-gradient(180deg,#ff7a4d,#e8492a);border:3px solid #ffd9c2;
+  border-radius:10px;padding:.28em .7em;font-weight:900;letter-spacing:.14em;color:#fff;
+  font-size:calc(var(--u) * 1.75);transform:rotate(-5deg);box-shadow:0 4px 12px rgba(0,0,0,.5);
+  text-shadow:0 2px 0 rgba(0,0,0,.28)}
+.start-node .sign::after{content:'';position:absolute;left:50%;top:88%;width:9%;height:calc(var(--u) * 2.4);
+  background:linear-gradient(180deg,#8a5a3a,#6b4128);transform:translateX(-50%);border-radius:0 0 3px 3px;z-index:-1}
+.puff{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffffff,#dfe6f2 75%);opacity:.85;z-index:-1}
+.pf1{width:calc(var(--u)*2.6);height:calc(var(--u)*2.2);left:-30%;bottom:-58%}
+.pf2{width:calc(var(--u)*1.7);height:calc(var(--u)*1.5);left:16%;bottom:-78%}
+.pf3{width:calc(var(--u)*1.3);height:calc(var(--u)*1.2);right:-14%;bottom:-50%;opacity:.7}
+
+/* FINISH */
+.finish-node{position:absolute;transform:translate(-50%,-50%);z-index:3;width:calc(var(--u) * 7.6);height:calc(var(--u) * 7.6)}
+.earth{position:absolute;inset:0;border-radius:50%;overflow:hidden;
+  background:radial-gradient(circle at 35% 30%,#7fd4ff 0 30%,#2f8fe0 62%,#1a5fae 100%);
+  box-shadow:inset -6px -8px 14px rgba(0,0,30,.4),0 0 18px rgba(127,212,255,.45)}
+.earth::before{content:'';position:absolute;inset:0;background:
+ radial-gradient(ellipse 26% 20% at 30% 32%,#46c46a 0 60%,transparent 66%),
+ radial-gradient(ellipse 20% 26% at 62% 55%,#46c46a 0 60%,transparent 66%),
+ radial-gradient(ellipse 16% 14% at 40% 70%,#46c46a 0 55%,transparent 62%),
+ radial-gradient(ellipse 30% 12% at 60% 16%,rgba(255,255,255,.75) 0 60%,transparent 70%)}
+.earth-glow{position:absolute;inset:-30%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,215,110,.4) 0 30%,transparent 68%);animation:glowPulse 2.6s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.07)}}
+.earth-star{position:absolute;top:calc(var(--u) * -1.5);left:50%;width:calc(var(--u) * 2.7);height:calc(var(--u) * 2.7);
+  transform:translateX(-50%) rotate(-8deg);background:#ffd257;filter:drop-shadow(0 0 7px rgba(255,210,87,.9));z-index:2;
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.finish-node .ribbon,.win-earth .ribbon{position:absolute;left:50%;bottom:calc(var(--u) * -1.35);transform:translateX(-50%);
+  background:linear-gradient(180deg,#ff5a4d,#d92f22);color:#fff;font-weight:900;font-size:calc(var(--u) * 1.5);
+  letter-spacing:.12em;padding:.16em .8em;border-radius:6px;white-space:nowrap;
+  box-shadow:0 4px 10px rgba(0,0,0,.5);border:2px solid #ffb0a6;z-index:2}
+
+/* Ракеты */
+.rocket{position:absolute;width:calc(var(--u) * 4.7);z-index:6;pointer-events:none;
+  transition:left .42s cubic-bezier(.35,.65,.35,1),top .42s cubic-bezier(.35,.65,.35,1);
+  filter:drop-shadow(0 3px 6px rgba(0,0,20,.5))}
+#rocket0{transform:translate(-56%,-82%)}
+#rocket1{transform:translate(-44%,-82%)}
+.rocket.no-trans{transition:none}
+.rocket .r-inner{transform:rotate(-10deg);transition:transform .3s ease}
+.rocket svg{display:block;width:100%;height:auto}
+.rocket .flame{transform-box:fill-box;transform-origin:50% 0;animation:flick .22s ease-in-out infinite alternate}
+@keyframes flick{from{transform:scaleY(.75)}to{transform:scaleY(1.15)}}
+.rocket.flying .flame{animation-duration:.12s}
+
+/* ===== Панель управления ===== */
+#controls{position:relative;z-index:20;display:flex;align-items:center;justify-content:center;gap:14px;
+  padding:8px 12px 14px;flex-wrap:wrap}
+.dice-zone{display:flex;align-items:center;gap:10px}
+.dice{--ds:58px;width:var(--ds);height:var(--ds);perspective:520px;flex:none}
+.cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;
+  transition:transform 1.05s cubic-bezier(.18,.75,.28,1);transform:rotateX(-18deg) rotateY(24deg)}
+.face{position:absolute;inset:0;background:linear-gradient(145deg,#ffffff,#e6ebf4);border-radius:13px;
+  border:2px solid #c9d4e4;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:9%;
+  box-shadow:inset 0 0 12px rgba(40,60,100,.08)}
+.face .pip{width:74%;height:74%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7a86,#e2293c 70%);place-self:center}
+.f1{transform:translateZ(calc(var(--ds) / 2))}
+.f2{transform:rotateY(90deg) translateZ(calc(var(--ds) / 2))}
+.f3{transform:rotateX(90deg) translateZ(calc(var(--ds) / 2))}
+.f4{transform:rotateX(-90deg) translateZ(calc(var(--ds) / 2))}
+.f5{transform:rotateY(-90deg) translateZ(calc(var(--ds) / 2))}
+.f6{transform:rotateY(180deg) translateZ(calc(var(--ds) / 2))}
+.dice-info{min-width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,255,255,.2);display:grid;place-items:center;font-weight:900;font-size:22px;flex:none}
+.roll-btn{font-weight:800;font-size:clamp(15px,2.4vw,17.5px);color:#fff;letter-spacing:.4px;cursor:pointer;
+  background:linear-gradient(180deg,#ff8a3d,#f4511e);border:none;border-bottom:4px solid #c33d10;border-radius:14px;
+  padding:12px 26px;box-shadow:0 8px 20px rgba(244,81,30,.3);transition:transform .15s,filter .15s}
+.roll-btn:hover:not(:disabled){transform:translateY(-2px)}
+.roll-btn:active:not(:disabled){transform:translateY(1px);border-bottom-width:2px}
+.roll-btn:disabled{filter:grayscale(.55) brightness(.65);cursor:default}
+.hint{font-size:clamp(12.5px,1.8vw,14.5px);opacity:.88;max-width:300px;text-align:left;line-height:1.35;min-height:2.6em}
+
+/* ===== Оверлеи ===== */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(8,11,42,.8);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:16px}
+.panel{background:linear-gradient(180deg,#222e70,#151d56);border:2px solid rgba(122,138,220,.45);border-radius:22px;
+  padding:26px 28px;max-width:560px;width:100%;text-align:center;max-height:92dvh;overflow-y:auto;
+  box-shadow:0 24px 60px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.16)}
+.panel h1{font-size:clamp(21px,4.6vw,31px);margin-bottom:8px;text-shadow:0 3px 10px rgba(0,0,0,.5);letter-spacing:.3px}
+.panel .sub{opacity:.88;margin-bottom:18px;font-size:clamp(13px,2.4vw,15px);line-height:1.45}
+.mode-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.mode-btn{font-weight:700;font-size:15px;padding:10px 22px;border-radius:12px;border:2px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.07);color:#fff;cursor:pointer;transition:all .2s}
+.mode-btn:hover{background:rgba(255,255,255,.16)}
+.mode-btn.active{background:linear-gradient(180deg,#ffd257,#f0971f);border-color:#ffd28a;color:#4a2600;box-shadow:0 6px 16px rgba(240,151,31,.35)}
+.big-btn{font-weight:800;font-size:clamp(16px,3vw,18px);color:#4a2600;letter-spacing:.3px;cursor:pointer;
+  background:linear-gradient(180deg,#ffd257,#ff9d1f);border:none;border-bottom:4px solid #d97706;border-radius:16px;
+  padding:13px 34px;box-shadow:0 10px 24px rgba(255,157,31,.35);transition:transform .15s}
+.big-btn:hover{transform:translateY(-2px)}
+.big-btn:active{transform:translateY(1px);border-bottom-width:2px}
+.ghost-btn{font-weight:700;font-size:15px;color:#fff;background:transparent;border:2px solid rgba(255,255,255,.3);
+  border-radius:14px;padding:12px 24px;cursor:pointer;transition:background .15s}
+.ghost-btn:hover{background:rgba(255,255,255,.12)}
+.mini-rules{margin-top:18px;text-align:left;font-size:13.5px;line-height:1.6;opacity:.94;
+  background:rgba(255,255,255,.06);border-radius:12px;padding:12px 15px}
+.menu-rocket{width:74px;margin:0 auto 6px;animation:menuRocket 2.4s ease-in-out infinite alternate}
+.menu-rocket svg{width:100%;height:auto;display:block}
+.menu-rocket .flame{transform-box:fill-box;transform-origin:50% 0;animation:flick .22s ease-in-out infinite alternate}
+@keyframes menuRocket{from{transform:translateY(0) rotate(-4deg)}to{transform:translateY(-9px) rotate(3deg)}}
+
+/* Задание */
+.task-panel{max-width:520px}
+.task-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;text-align:left}
+.planet-badge{width:46px;height:46px;border-radius:50%;background:var(--bc,#f0a63a);display:grid;place-items:center;
+  font-weight:900;font-size:21px;border:3px solid rgba(255,255,255,.4);box-shadow:0 4px 10px rgba(0,0,0,.4);flex:none}
+.task-planet-name{font-weight:800;font-size:17px}
+.task-type{font-size:12px;opacity:.72;text-transform:uppercase;letter-spacing:.09em;font-weight:700}
+.task-q{font-size:clamp(17px,3.2vw,22px);font-weight:700;line-height:1.45;background:rgba(255,255,255,.07);
+  border-radius:14px;padding:16px 18px;margin-bottom:15px;min-height:82px;display:flex;align-items:center;justify-content:center;text-align:center}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ans-btn{font-weight:800;font-size:clamp(17px,3vw,20px);color:#fff;background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,255,255,.22);border-radius:14px;padding:14px 8px;cursor:pointer;transition:all .15s}
+.ans-btn:hover:not(:disabled){background:rgba(255,255,255,.18);transform:translateY(-2px)}
+.ans-btn:disabled{cursor:default}
+.ans-btn.correct{background:linear-gradient(180deg,#43cf74,#1fa04e);border-color:#9dffbe;box-shadow:0 6px 16px rgba(31,160,78,.4)}
+.ans-btn.wrong{background:rgba(227,77,90,.4);border-color:#ff8f98;opacity:.85}
+.feedback{margin:14px 0 2px;padding:12px 14px;border-radius:12px;font-weight:700;line-height:1.5;font-size:15px}
+.feedback.ok{background:rgba(34,169,82,.22);border:1px solid rgba(76,217,123,.45)}
+.feedback.no{background:rgba(227,77,90,.16);border:1px solid rgba(255,143,152,.4)}
+.feedback .star-ic{width:18px;height:18px;vertical-align:-3px;margin-left:4px}
+#taskNext{margin-top:14px}
+
+/* Победа */
+.win-panel{max-width:470px}
+.win-earth{position:relative;width:110px;height:110px;margin:2px auto 14px}
+.win-earth .earth-star{width:34px;height:34px;top:-20px}
+.win-stats{display:flex;gap:12px;justify-content:center;margin:14px 0;flex-wrap:wrap}
+.stat{background:rgba(255,255,255,.07);border-radius:14px;padding:12px 16px;min-width:88px}
+.stat b{font-size:26px;display:block;margin-bottom:2px;color:#ffd257}
+.stat span{font-size:12.5px;opacity:.8}
+.medal{font-size:17.5px;font-weight:800;color:#ffd257;margin-bottom:16px;letter-spacing:.3px}
+.win-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* Правила */
+.rules-panel{max-width:520px;text-align:left}
+.rules-panel h1{text-align:center}
+.rules-txt{margin:14px 0 20px;display:grid;gap:10px}
+.rules-txt p{font-size:14.5px;line-height:1.55;background:rgba(255,255,255,.05);border-radius:12px;padding:10px 14px}
+.rules-txt b{color:#ffd257}
+.rules-panel .big-btn{display:block;margin:0 auto}
+
+/* ===== Адаптив ===== */
+@media (max-width:760px){
+  #hud{padding:8px 10px}
+  #controls{gap:9px;padding-bottom:12px}
+  .hint{max-width:230px}
+  .dice{--ds:48px}
+  .dice-info{min-width:40px;height:40px;font-size:19px}
+  .roll-btn{padding:11px 18px}
+  .panel{padding:20px 16px}
+  .answers{gap:8px}
+  .ans-btn{padding:13px 6px}
+}
+@media (max-width:560px){
+  .hud-title span{font-size:12.5px}
+  .pill{padding:5px 9px;font-size:11.5px}
+  .icon-btn{width:32px;height:32px}
+  #controls{flex-wrap:wrap}
+  .hint{width:100%;text-align:center;max-width:none;min-height:0}
+  .dice-zone{order:1}.roll-btn{order:2;flex:1}.hint{order:3}
+  .roll-btn{width:100%}
+  .answers{grid-template-columns:1fr 1fr}
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sky">
+    <div class="galaxy"></div>
+    <div class="nebula"></div>
+    <div class="comet"><i></i></div>
+    <div class="satellite">
+      <i class="pan pl"></i><i class="sat-body"></i><i class="pan pr"></i>
+    </div>
+    <div id="stars"></div>
+    <div class="ast a1"></div>
+    <div class="ast a2"></div>
+    <div class="corner-planet"></div>
+    <div class="moon-ground">
+      <div class="g1"></div>
+      <div class="g2"></div>
+      <div class="crater c1"></div>
+      <div class="crater c2"></div>
+      <div class="crater c3"></div>
+      <div class="crater c4"></div>
+    </div>
+  </div>
+
+  <header id="hud">
+    <div class="hud-title">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ff6b52" d="M13.5 2c3.5 1.2 6.8 4.5 8 8l-4.7 1.2c-.8-2-2.4-3.7-4.4-4.5L13.5 2z"/><path fill="#e8ecf8" d="M12.4 6.7c2 .8 3.6 2.4 4.4 4.4l-6.3 6.4-4.9-4.9 6.8-5.9z"/><circle cx="13.1" cy="10.4" r="1.7" fill="#3aa6e8"/><path fill="#ff6b52" d="M5.6 12.6l4.9 4.9-1.9 4.4c-1.9-.4-4.2-1.5-5.4-2.7-1.2-1.2-2.3-3.5-2.7-5.4l5.1-1.2z"/><path fill="#ffb029" d="M3.2 20.8l3-1.2c-.7-.4-1.4-1.1-1.8-1.8l-1.2 3z"/></svg>
+      <span>Космическая математика</span>
+    </div>
+    <div class="hud-right">
+      <div class="pill" id="turnPill"><i class="dot" id="turnDot"></i><span id="turnName">Ракета №1</span></div>
+      <div class="pill" id="starsPill">
+        <svg viewBox="0 0 24 24" class="star-ic"><path fill="#ffd257" d="M12 2l2.9 6.2 6.6.8-4.9 4.6 1.3 6.6L12 17l-5.9 3.2 1.3-6.6L2.5 9l6.6-.8z"/></svg>
+        <b id="starsCount">0</b>
+      </div>
+      <button class="icon-btn" id="rulesBtn" aria-label="Правила игры" title="Правила">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 18h2v-2h-2v2zm1-16A10 10 0 0 0 2 12a10 10 0 1 0 10-10zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm0-14a4 4 0 0 0-4 4h2a2 2 0 1 1 4 0c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5a4 4 0 0 0-4-4z"/></svg>
+      </button>
+      <button class="icon-btn" id="soundBtn" aria-label="Звук" title="Звук">
+        <svg viewBox="0 0 24 24" class="snd-on"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1c2.9.9 5 3.5 5 6.7s-2.1 5.8-5 6.7v2.1c4-.9 7-4.5 7-8.8s-3-7.9-7-8.8z"/></svg>
+        <svg viewBox="0 0 24 24" class="snd-off" style="display:none"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.6 3l2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4-2.7-2.7z"/></svg>
+      </button>
+      <button class="icon-btn" id="restartBtn" aria-label="Начать заново" title="Заново">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M17.6 6.4A8 8 0 1 0 19.4 14h-2.1a6 6 0 1 1-1.1-6.2L13 11h7V4l-2.4 2.4z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="board-wrap">
+    <div id="board">
+      <div id="paths"></div>
+      <div id="planets"></div>
+
+      <div class="start-node" id="startNode" style="left:7%;top:86%">
+        <div class="sign">START</div>
+        <div class="puff pf1"></div>
+        <div class="puff pf2"></div>
+        <div class="puff pf3"></div>
+      </div>
+
+      <div class="finish-node" id="finishNode" style="left:91%;top:81%">
+        <div class="earth-glow"></div>
+        <div class="earth"></div>
+        <div class="earth-star"></div>
+        <div class="ribbon">FINISH</div>
+      </div>
+
+      <div class="rocket" id="rocket0">
+        <div class="r-inner">
+          <svg viewBox="0 0 60 100" aria-hidden="true">
+            <path class="flame f2" d="M21 66 Q30 97 30 97 Q39 66 30 69 Z" fill="#ffd257"/>
+            <path class="flame f1" d="M24 65 Q30 86 30 86 Q36 65 30 67 Z" fill="#ff8a2a"/>
+            <path class="rf" d="M17 50 L4 73 L18 65 Z" fill="#e63946" stroke="#232a55" stroke-width="2.5" stroke-linejoin="round"/>
+            <path class="rf" d="M43 50 L56 73 L42 65 Z" fill="#e63946" stroke="#232a55" stroke-width="2.5" stroke-linejoin="round"/>
+            <path class="rb" d="M30 3 C41 15 46 35 46 56 C46 62 44 66 42 68 L18 68 C16 66 14 62 14 56 C14 35 19 15 30 3 Z" fill="#f7f9ff" stroke="#232a55" stroke-width="3" stroke-linejoin="round"/>
+            <path class="rn" d="M30 3 C36 10 40 18 42.6 27 L17.4 27 C20 18 24 10 30 3 Z" fill="#e63946" stroke="#232a55" stroke-width="3" stroke-linejoin="round"/>
+            <circle cx="30" cy="40" r="9.5" fill="#8fd8ff" stroke="#232a55" stroke-width="3"/>
+            <circle cx="27" cy="37" r="3" fill="#dcf4ff"/>
+            <path d="M18 68 L42 68 L40.5 74 L19.5 74 Z" fill="#e63946" stroke="#232a55" stroke-width="2.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="rocket p2 hidden" id="rocket1">
+        <div class="r-inner">
+          <svg viewBox="0 0 60 100" aria-hidden="true">
+            <path class="flame f2" d="M21 66 Q30 97 30 97 Q39 66 30 69 Z" fill="#ffd257"/>
+            <path class="flame f1" d="M24 65 Q30 86 30 86 Q36 65 30 67 Z" fill="#4f9dff"/>
+            <path class="rf" d="M17 50 L4 73 L18 65 Z" fill="#2e7bff" stroke="#1b2a55" stroke-width="2.5" stroke-linejoin="round"/>
+            <path class="rf" d="M43 50 L56 73 L42 65 Z" fill="#2e7bff" stroke="#1b2a55" stroke-width="2.5" stroke-linejoin="round"/>
+            <path class="rb" d="M30 3 C41 15 46 35 46 56 C46 62 44 66 42 68 L18 68 C16 66 14 62 14 56 C14 35 19 15 30 3 Z" fill="#eaf2ff" stroke="#1b2a55" stroke-width="3" stroke-linejoin="round"/>
+            <path class="rn" d="M30 3 C36 10 40 18 42.6 27 L17.4 27 C20 18 24 10 30 3 Z" fill="#2e7bff" stroke="#1b2a55" stroke-width="3" stroke-linejoin="round"/>
+            <circle cx="30" cy="40" r="9.5" fill="#ffe08a" stroke="#1b2a55" stroke-width="3"/>
+            <circle cx="27" cy="37" r="3" fill="#fff6d8"/>
+            <path d="M18 68 L42 68 L40.5 74 L19.5 74 Z" fill="#2e7bff" stroke="#1b2a55" stroke-width="2.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer id="controls">
+    <div class="dice-zone">
+      <div class="dice">
+        <div class="cube" id="cube">
+          <div class="face f1"><span class="pip" style="grid-area:2/2"></span></div>
+          <div class="face f2"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:3/3"></span></div>
+          <div class="face f3"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:2/2"></span><span class="pip" style="grid-area:3/3"></span></div>
+          <div class="face f4"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:1/3"></span><span class="pip" style="grid-area:3/1"></span><span class="pip" style="grid-area:3/3"></span></div>
+          <div class="face f5"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:1/3"></span><span class="pip" style="grid-area:2/2"></span><span class="pip" style="grid-area:3/1"></span><span class="pip" style="grid-area:3/3"></span></div>
+          <div class="face f6"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:2/1"></span><span class="pip" style="grid-area:3/1"></span><span class="pip" style="grid-area:1/3"></span><span class="pip" style="grid-area:2/3"></span><span class="pip" style="grid-area:3/3"></span></div>
+        </div>
+      </div>
+      <div class="dice-info" id="diceNum">?</div>
+    </div>
+    <button id="rollBtn" class="roll-btn" disabled>Бросить кубик!</button>
+    <div id="hint" class="hint">Нажми «Начать полёт», чтобы отправиться к звёздам!</div>
+  </footer>
+</div>
+
+<!-- Стартовое меню -->
+<div class="overlay" id="startOverlay">
+  <div class="panel start-panel">
+    <div class="menu-rocket">
+      <svg viewBox="0 0 60 100"><path class="flame f2" d="M21 66 Q30 97 30 97 Q39 66 30 69 Z" fill="#ffd257"/><path class="flame f1" d="M24 65 Q30 86 30 86 Q36 65 30 67 Z" fill="#ff8a2a"/><path class="rf" d="M17 50 L4 73 L18 65 Z" fill="#e63946" stroke="#232a55" stroke-width="2.5" stroke-linejoin="round"/><path class="rf" d="M43 50 L56 73 L42 65 Z" fill="#e63946" stroke="#232a55" stroke-width="2.5" stroke-linejoin="round"/><path d="M30 3 C41 15 46 35 46 56 C46 62 44 66 42 68 L18 68 C16 66 14 62 14 56 C14 35 19 15 30 3 Z" fill="#f7f9ff" stroke="#232a55" stroke-width="3" stroke-linejoin="round"/><path d="M30 3 C36 10 40 18 42.6 27 L17.4 27 C20 18 24 10 30 3 Z" fill="#e63946" stroke="#232a55" stroke-width="3" stroke-linejoin="round"/><circle cx="30" cy="40" r="9.5" fill="#8fd8ff" stroke="#232a55" stroke-width="3"/><path d="M18 68 L42 68 L40.5 74 L19.5 74 Z" fill="#e63946" stroke="#232a55" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    </div>
+    <h1>Космическая математика</h1>
+    <p class="sub">Игра-бродилка: таблица умножения и космические задачи.<br>Пролети через 20 планет и приземлись на Земле!</p>
+    <div class="mode-row" role="group" aria-label="Режим игры">
+      <button class="mode-btn active" data-mode="1">Один игрок</button>
+      <button class="mode-btn" data-mode="2">Два игрока</button>
+    </div>
+    <button id="startBtn" class="big-btn">Начать полёт!</button>
+    <div class="mini-rules">
+      <b>Правила полёта:</b><br>
+      1. Бросай кубик — ракета летит вперёд на выпавшее число планет.<br>
+      2. На каждой планете — задание: таблица умножения, деление или задача.<br>
+      3. Правильный ответ — звезда в копилку. Ошибка — возврат на одну планету назад.<br>
+      4. На Землю нужно попасть точным числом: если выпадет больше — отскочишь назад!
+    </div>
+  </div>
+</div>
+
+<!-- Задание -->
+<div class="overlay hidden" id="taskOverlay" role="dialog" aria-modal="true" aria-label="Задание планеты">
+  <div class="panel task-panel">
+    <div class="task-head">
+      <span class="planet-badge" id="taskBadge">1</span>
+      <div class="task-head-txt">
+        <div class="task-planet-name" id="taskPlanet">Планета 1</div>
+        <div class="task-type" id="taskType">Таблица умножения</div>
+      </div>
+    </div>
+    <div class="task-q" id="taskQ">Сколько будет 2 × 2?</div>
+    <div class="answers" id="answers"></div>
+    <div class="feedback hidden" id="feedback"></div>
+    <button id="taskNext" class="big-btn hidden">Продолжить полёт</button>
+  </div>
+</div>
+
+<!-- Победа -->
+<div class="overlay hidden" id="winOverlay" role="dialog" aria-modal="true">
+  <div class="panel win-panel">
+    <div class="win-earth">
+      <div class="earth-glow"></div>
+      <div class="earth"></div>
+      <div class="earth-star"></div>
+    </div>
+    <h1 id="winTitle">Миссия выполнена!</h1>
+    <p class="sub" id="winSub">Ты долетел до Земли!</p>
+    <div class="win-stats" id="winStats"></div>
+    <div class="medal" id="winMedal"></div>
+    <div class="win-btns">
+      <button id="againBtn" class="big-btn">Играть снова</button>
+      <button id="menuBtn" class="ghost-btn">В меню</button>
+    </div>
+  </div>
+</div>
+
+<!-- Правила -->
+<div class="overlay hidden" id="rulesOverlay">
+  <div class="panel rules-panel">
+    <h1>Правила игры</h1>
+    <div class="rules-txt">
+      <p><b>1.</b> Бросай кубик — ракета пролетит вперёд столько планет, сколько выпало очков.</p>
+      <p><b>2.</b> Остановившись на планете, выполняй её задание: таблица умножения, деление или космическая задача. Выбирай правильный ответ из четырёх вариантов.</p>
+      <p><b>3.</b> Верный ответ — звезда в копилку. Ошибка — правильный ответ покажут, а ракета вернётся на одну планету назад.</p>
+      <p><b>4.</b> На Землю (FINISH) нужно попасть точным числом. Если очков больше, чем нужно, — ракета долетит до Земли и отскочит назад на лишние шаги.</p>
+      <p><b>5.</b> Собирай звёзды до финиша! В игре для двоих побеждает тот, кто первым приземлится на Земле.</p>
+    </div>
+    <button id="rulesClose" class="big-btn">Понятно!</button>
+  </div>
+</div>
+
+<script>
+/* ===== Космическая математика — игровая логика ===== */
+(function () {
+  'use strict';
+
+  var $ = function (s) { return document.querySelector(s); };
+
+  // ---------- Случайные помощники ----------
+  function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+  function pick(arr) { return arr[rnd(0, arr.length - 1)]; }
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = rnd(0, i), t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  // ---------- Карта: планеты (как на картинке) ----------
+  var PLANETS = [
+    { n: 1,  x: 14, y: 21, s: 5.0, t: 'moon',    c1: '#d3d8e0', c2: '#9aa3b2', name: 'Луна' },
+    { n: 2,  x: 26, y: 20, s: 6.0, t: 'gas',     c1: '#ffc85c', c2: '#e8963a', name: 'Медовая' },
+    { n: 3,  x: 38, y: 22, s: 5.7, t: 'mars',    c1: '#e2573c', c2: '#a83226', name: 'Красная' },
+    { n: 4,  x: 50, y: 20, s: 5.9, t: 'ocean',   c1: '#39b6e8', c2: '#1f7fc9', name: 'Голубая' },
+    { n: 5,  x: 62, y: 21, s: 7.2, t: 'jupiter', c1: '#d9a066', c2: '#a5673f', name: 'Полосатая' },
+    { n: 6,  x: 74, y: 20, s: 6.4, t: 'ring-t',  c1: '#f4c25c', c2: '#d8912f', rc: '#f9e3a8cc', name: 'Колечко' },
+    { n: 7,  x: 87, y: 22, s: 5.4, t: 'ring-t',  c1: '#59d6c9', c2: '#2ba8a0', rc: '#d5fff6cc', name: 'Изумрудная' },
+    { n: 8,  x: 89, y: 47, s: 5.8, t: 'gas',     c1: '#4f86e8', c2: '#2b56b0', name: 'Ветреная' },
+    { n: 9,  x: 77, y: 46, s: 5.2, t: 'moon',    c1: '#c98d5e', c2: '#8f5a34', name: 'Кратерная' },
+    { n: 10, x: 65, y: 47, s: 5.6, t: 'moon',    c1: '#f08bd0', c2: '#c2509e', name: 'Розовая' },
+    { n: 11, x: 53, y: 45, s: 6.0, t: 'ring-t',  c1: '#6ec6ff', c2: '#3a8fd9', rc: '#e8f6ffcc', name: 'Морозная' },
+    { n: 12, x: 41, y: 47, s: 6.3, t: 'lava',    c1: '#5a4048', c2: '#241a1c', name: 'Огненная' },
+    { n: 13, x: 29, y: 46, s: 5.7, t: 'moon',    c1: '#b06ce8', c2: '#7e3cc0', name: 'Фиолетовая' },
+    { n: 14, x: 16, y: 47, s: 5.3, t: 'plain',   c1: '#35d0e8', c2: '#1a9cc0', name: 'Ледяная' },
+    { n: 15, x: 16, y: 72, s: 5.7, t: 'gas',     c1: '#5cb0f0', c2: '#2f7cc9', name: 'Синяя' },
+    { n: 16, x: 28, y: 71, s: 5.6, t: 'moon',    c1: '#c8d84e', c2: '#93a832', name: 'Мшистая' },
+    { n: 17, x: 40, y: 72, s: 6.0, t: 'ring-t',  c1: '#a86ce8', c2: '#7a3ec9', rc: '#e9d5ffcc', name: 'Тайная' },
+    { n: 18, x: 52, y: 71, s: 5.7, t: 'gas',     c1: '#f0654a', c2: '#c23a28', name: 'Пылающая' },
+    { n: 19, x: 64, y: 72, s: 5.4, t: 'moon',    c1: '#e3ecf7', c2: '#a8bdd4', name: 'Снежная' },
+    { n: 20, x: 76, y: 71, s: 6.1, t: 'ocean',   c1: '#6a7ce8', c2: '#4450b8', name: 'Загадочная' }
+  ];
+  var START = { x: 7, y: 86 };
+  var FINISH = { x: 91, y: 81 };
+  var NODES = [START].concat(PLANETS.map(function (p) { return { x: p.x, y: p.y }; })).concat([FINISH]);
+  var LAST = NODES.length - 1; // индекс Земли = 21
+
+  var BADGE_COLORS = ['#5b8def', '#f0a63a', '#e05a4e', '#3ec46d', '#9a6ae0', '#e874b0', '#38b6d9', '#d9822b', '#c25ae0', '#4cb56e'];
+  var TASK_TYPE_LABEL = { mult: 'Таблица умножения', div: 'Деление', task: 'Космическая задача' };
+
+  // Тип задания каждой планеты: m2..m5 — умножение на 2..5, m25/m69/m789 — миксы,
+  // div — деление, wm — задача на умножение, wd — задача на деление, wh — задача в два действия
+  var TASK_MAP = {
+    1: 'm2',  2: 'm3',  3: 'm4',  4: 'm5',
+    5: 'm25', 6: 'm69', 7: 'm25', 8: 'm69',
+    9: 'div', 10: 'm69', 11: 'div', 12: 'm789',
+    13: 'wm', 14: 'div', 15: 'm789', 16: 'wm',
+    17: 'wm', 18: 'wd', 19: 'wm', 20: 'wh'
+  };
+
+  // ---------- Генератор заданий ----------
+  function multQ(a, b) {
+    return { text: 'Сколько будет ' + a + ' × ' + b + '?', ans: a * b, kind: 'mult', a: a, b: b };
+  }
+  function divQ(b, q) {
+    return { text: 'Сколько будет ' + (b * q) + ' ÷ ' + b + '?', ans: q, kind: 'div', b: b, q: q };
+  }
+  var W_MULT = [
+    function (a, b) { return ['В каждый отсек ракеты погрузили по ' + a + ' контейнеров с едой. Всего отсеков ' + b + '. Сколько всего контейнеров погрузили?', a * b]; },
+    function (a, b) { return ['На каждой из ' + b + ' планет живёт по ' + a + ' весёлых инопланетян. Сколько всего инопланетян на этих планетах?', a * b]; },
+    function (a, b) { return ['Космонавт собирает по ' + a + ' звёздочек каждый день. Сколько звёздочек он соберёт за ' + b + ' дней?', a * b]; },
+    function (a, b) { return ['В одной упаковке ' + a + ' тюбиков космического питания. Сколько тюбиков в ' + b + ' таких упаковках?', a * b]; },
+    function (a, b) { return ['Ракета пролетает ' + a + ' км за одну минуту. Какое расстояние она пролетит за ' + b + ' минут?', a * b]; },
+    function (a, b) { return ['В одном созвездии ' + b + ' звёзд. Сколько звёзд в ' + a + ' таких созвездиях?', a * b]; },
+    function (a, b) { return ['Робот ремонтирует ' + a + ' деталей в час. Сколько деталей он отремонтирует за ' + b + ' часов?', a * b]; }
+  ];
+  var W_DIV = [
+    function (b, q) { return ['Космонавты собрали ' + (b * q) + ' метеоритов и разделили их поровну на ' + b + ' станции. Сколько метеоритов получит каждая станция?', q]; },
+    function (b, q) { return [(b * q) + ' звёздочек разложили поровну в ' + b + ' банок. Сколько звёздочек в каждой банке?', q]; },
+    function (b, q) { return [(b * q) + ' конфет раздали поровну ' + b + ' космонавтам. По сколько конфет получил каждый?', q]; },
+    function (b, q) { return ['Всего ' + (b * q) + ' писем с Земли доставили поровну на ' + b + ' планет. Сколько писем получила каждая планета?', q]; }
+  ];
+  var W_HARD = [
+    function (a, b, c) { return ['Космонавт взял в полёт ' + a + ' коробки по ' + b + ' конфет и уже съел ' + c + ' конфет. Сколько конфет осталось?', a * b - c]; },
+    function (a, b, c) { return ['Ракета заправлена ' + a + ' бака топлива по ' + b + ' литров. В полёте потратили ' + c + ' литров. Сколько литров топлива осталось?', a * b - c]; },
+    function (a, b, c) { return ['Купили ' + a + ' набора по ' + b + ' звёздных наклеек и подарили другу ' + c + ' наклейки. Сколько наклеек осталось?', a * b - c]; }
+  ];
+
+  function genTask(type) {
+    var t, res;
+    switch (type) {
+      case 'm2':   return multQ(2, rnd(2, 9));
+      case 'm3':   return multQ(3, rnd(2, 9));
+      case 'm4':   return multQ(4, rnd(2, 9));
+      case 'm5':   return multQ(5, rnd(2, 9));
+      case 'm25':  return multQ(rnd(2, 5), rnd(2, 9));
+      case 'm69':  t = rnd(0, 1); return t ? multQ(rnd(6, 9), rnd(2, 9)) : multQ(rnd(2, 9), rnd(6, 9));
+      case 'm789': return multQ(pick([7, 8, 9]), rnd(4, 9));
+      case 'div':  return divQ(rnd(2, 9), rnd(2, 9));
+      case 'wm':
+        res = pick(W_MULT)(rnd(2, 9), rnd(2, 9));
+        return { text: res[0], ans: res[1], kind: 'task', a: rnd(2, 9), b: rnd(2, 9) };
+      case 'wd':
+        t = rnd(2, 9); res = pick(W_DIV)(t, rnd(2, 9));
+        return { text: res[0], ans: res[1], kind: 'task', a: t, b: t };
+      case 'wh':
+        var a = rnd(2, 4), b = rnd(3, 6), c = rnd(2, Math.max(3, a * b - 3));
+        res = pick(W_HARD)(a, b, c);
+        return { text: res[0], ans: res[1], kind: 'task', a: a, b: b };
+    }
+    return multQ(2, 2);
+  }
+
+  function makeChoices(q) {
+    var ans = q.ans, pool = [];
+    if (q.kind === 'div') {
+      pool = [q.ans + 1, q.ans - 1, q.ans + 2, q.ans - 2, (q.ans + 1) * (q.b || 3), q.ans + 3];
+    } else {
+      var a = q.a || 3, b = q.b || 3;
+      pool = [ans + a, ans - a, ans + b, ans - b, a * (b + 1), (a + 1) * b, ans + 10, ans - 10, ans + 1, ans - 1];
+    }
+    pool = shuffle(pool.filter(function (v) { return v > 0 && v !== ans; }));
+    var opts = [ans];
+    for (var i = 0; i < pool.length && opts.length < 4; i++) {
+      if (opts.indexOf(pool[i]) === -1) opts.push(pool[i]);
+    }
+    var extra = ans + 5;
+    while (opts.length < 4) { if (extra !== ans && opts.indexOf(extra) === -1) opts.push(extra); extra += 2; }
+    opts = shuffle(opts);
+    return { options: opts, correctIdx: opts.indexOf(ans) };
+  }
+
+  // ---------- Звук (WebAudio) ----------
+  var AC = null;
+  function ac() {
+    if (!AC) {
+      try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+    }
+    if (AC.state === 'suspended') { try { AC.resume(); } catch (e) {} }
+    return AC;
+  }
+  function beep(freq, dur, type, vol, when, slide) {
+    if (!G.sound) return;
+    var a = ac(); if (!a) return;
+    var o = a.createOscillator(), g = a.createGain();
+    var t0 = a.currentTime + (when || 0);
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t0);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, t0 + dur);
+    g.gain.setValueAtTime(vol || 0.12, t0);
+    g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(t0); o.stop(t0 + dur + 0.03);
+  }
+  var S = {
+    roll: function () { for (var i = 0; i < 6; i++) beep(160 + Math.random() * 140, 0.05, 'square', 0.045, i * 0.09); },
+    hop: function (k) { beep(290 + k * 35, 0.13, 'triangle', 0.14); },
+    ok: function () { [523, 659, 784].forEach(function (f, i) { beep(f, 0.16, 'triangle', 0.16, i * 0.11); }); },
+    no: function () { beep(200, 0.32, 'sawtooth', 0.1, 0, 120); },
+    star: function () { beep(1150, 0.16, 'sine', 0.16, 0.35, 1750); },
+    win: function () { [523, 659, 784, 1046, 784, 1046, 1318].forEach(function (f, i) { beep(f, 0.2, 'triangle', 0.17, i * 0.14); }); },
+    back: function () { beep(320, 0.16, 'triangle', 0.12, 0, 210); }
+  };
+
+  // ---------- Состояние игры ----------
+  var G = {
+    modeSel: 1,       // выбранный режим в меню
+    mode: 1,          // активный режим
+    players: [{ pos: 0, stars: 0, correct: 0, wrong: 0 }],
+    cur: 0,
+    state: 'menu',    // menu | idle | rolling | moving | task | won
+    sound: true,
+    spins: 0,
+    bounced: false,
+    q: null
+  };
+
+  // ---------- DOM ----------
+  var boardEl = $('#board'), planetsBox = $('#planets'), pathsBox = $('#paths');
+  var starsBox = $('#stars');
+  var cubeEl = $('#cube'), diceNumEl = $('#diceNum'), rollBtn = $('#rollBtn'), hintEl = $('#hint');
+  var turnNameEl = $('#turnName'), turnDotEl = $('#turnDot'), starsCountEl = $('#starsCount');
+  var rocketEls = [$('#rocket0'), $('#rocket1')];
+  var planetEls = {};   // номер планеты -> элемент
+  var litEl = null;
+
+  // ---------- Построение фона ----------
+  (function buildStars() {
+    var html = '';
+    for (var i = 0; i < 95; i++) {
+      var sz = Math.random() < 0.82 ? 2 : 3;
+      var big = Math.random() < 0.12;
+      html += '<i style="left:' + (Math.random() * 100).toFixed(2) + '%;top:' + (Math.random() * 100).toFixed(2) + '%;width:' + sz + 'px;height:' + sz + 'px;--tw:' + (2 + Math.random() * 3.5).toFixed(2) + 's;--td:' + (Math.random() * 4).toFixed(2) + 's;' + (big ? 'box-shadow:0 0 6px #fff;' : '') + 'opacity:.8"></i>';
+    }
+    starsBox.innerHTML = html;
+  })();
+
+  // ---------- Построение планет ----------
+  (function buildPlanets() {
+    var html = '';
+    PLANETS.forEach(function (p) {
+      var cls = 't-' + p.t;
+      var ring = (p.t === 'ring-t' || p.n === 6)
+        ? '<div class="ring" style="--rc:' + (p.rc || '#ffffffaa') + '"></div>' : '';
+      html += '<div class="planet ' + cls + '" id="planet' + p.n + '" style="left:' + p.x + '%;top:' + p.y + '%;--s:' + p.s + ';--c1:' + p.c1 + ';--c2:' + p.c2 + ';--bc:' + BADGE_COLORS[(p.n - 1) % BADGE_COLORS.length] + '">' +
+        '<div class="badge">' + p.n + '</div><div class="body"></div>' + ring + '</div>';
+    });
+    planetsBox.innerHTML = html;
+    PLANETS.forEach(function (p) { planetEls[p.n] = $('#planet' + p.n); });
+  })();
+
+  // ---------- Пунктирный маршрут ----------
+  function nodePx(i) {
+    var n = NODES[i];
+    return { x: n.x / 100 * boardEl.clientWidth, y: n.y / 100 * boardEl.clientHeight };
+  }
+  function drawPaths() {
+    var html = '';
+    for (var i = 1; i < NODES.length; i++) {
+      var a = nodePx(i - 1), b = nodePx(i);
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      var ang = Math.atan2(dy, dx) * 180 / Math.PI;
+      // укорачиваем отрезок, чтобы пунктир не залезал на планеты
+      var pad = Math.min(len * 0.24, 30);
+      var l = Math.max(len - pad * 2, 6);
+      html += '<div class="seg" style="left:' + (a.x + Math.cos(ang * Math.PI / 180) * pad) + 'px;top:' + (a.y + Math.sin(ang * Math.PI / 180) * pad) + 'px;width:' + l + 'px;transform:rotate(' + ang + 'deg)"></div>';
+    }
+    pathsBox.innerHTML = html;
+  }
+
+  // ---------- Размер поля ----------
+  function fit() {
+    boardEl.style.setProperty('--u', (boardEl.clientWidth / 100) + 'px');
+    drawPaths();
+  }
+  window.addEventListener('resize', fit);
+
+  // ---------- Позиция ракеты ----------
+  function setRocket(p, nodeIdx, instant) {
+    var el = rocketEls[p], n = NODES[nodeIdx];
+    if (instant) el.classList.add('no-trans');
+    el.style.left = n.x + '%';
+    el.style.top = n.y + '%';
+    if (instant) { void el.offsetWidth; el.classList.remove('no-trans'); }
+  }
+  function rotateRocket(p, from, to) {
+    var A = NODES[from], B = NODES[to];
+    var w = boardEl.clientWidth, h = boardEl.clientHeight;
+    var dx = (B.x - A.x) / 100 * w, dy = (B.y - A.y) / 100 * h;
+    var ang = Math.atan2(dx, -dy) * 180 / Math.PI; // 0 = вверх
+    rocketEls[p].querySelector('.r-inner').style.transform = 'rotate(' + ang.toFixed(1) + 'deg)';
+    rocketEls[p].classList.add('flying');
+  }
+  function relaxRocket(p) {
+    rocketEls[p].querySelector('.r-inner').style.transform = 'rotate(-10deg)';
+    rocketEls[p].classList.remove('flying');
+  }
+
+  function lit(nodeIdx) {
+    if (litEl) litEl.classList.remove('lit');
+    litEl = null;
+    if (nodeIdx >= 1 && nodeIdx <= 20) {
+      litEl = planetEls[nodeIdx];
+      if (litEl) litEl.classList.add('lit');
+    }
+  }
+
+  // ---------- HUD ----------
+  function updateHud() {
+    var pl = G.players[G.cur];
+    starsCountEl.textContent = pl.stars;
+    turnNameEl.textContent = 'Ракета №' + (G.cur + 1);
+    turnDotEl.className = 'dot' + (G.cur === 1 ? ' blue' : '');
+  }
+  function setHint(txt) { hintEl.textContent = txt; }
+
+  // ---------- Кубик ----------
+  var FACE_OFFS = { 1: [0, 0], 2: [0, -90], 3: [-90, 0], 4: [90, 0], 5: [0, 90], 6: [0, 180] };
+  function rollDice() {
+    if (G.state !== 'idle') return;
+    G.state = 'rolling';
+    rollBtn.disabled = true;
+    diceNumEl.textContent = '?';
+    setHint('Кубик брошен...');
+    S.roll();
+    G.spins++;
+    var v = rnd(1, 6), off = FACE_OFFS[v];
+    cubeEl.style.transform = 'rotateX(' + (360 * G.spins * 2 + off[0]) + 'deg) rotateY(' + (360 * (G.spins * 2 + 1) + off[1]) + 'deg)';
+    setTimeout(function () {
+      diceNumEl.textContent = v;
+      setHint('Выпало ' + v + '. Полетели!');
+      moveBy(v);
+    }, 1080);
+  }
+
+  // ---------- Движение ----------
+  function pathSequence(pos, steps) {
+    var seq = [], dir = 1;
+    for (var i = 0; i < steps; i++) {
+      if (pos === LAST) dir = -1;
+      else if (pos === 0) dir = 1;
+      pos += dir;
+      seq.push(pos);
+    }
+    return seq;
+  }
+  function moveBy(steps) {
+    var pl = G.players[G.cur];
+    var seq = pathSequence(pl.pos, steps);
+    G.bounced = seq.indexOf(LAST) !== -1 && seq[seq.length - 1] !== LAST;
+    animateSeq(G.cur, seq, function () { afterMove(pl, seq[seq.length - 1]); });
+  }
+  function animateSeq(p, seq, done) {
+    G.state = 'moving';
+    var pl = G.players[p];
+    var k = 0;
+    (function step() {
+      if (k >= seq.length) {
+        setTimeout(function () {
+          relaxRocket(p);
+          if (G.mode === 1 || p === G.cur) lit(pl.pos);
+          done();
+        }, 240);
+        return;
+      }
+      var from = pl.pos, to = seq[k++];
+      rotateRocket(p, from, to);
+      pl.pos = to;
+      setRocket(p, to);
+      S.hop(k);
+      setTimeout(step, 470);
+    })();
+  }
+  function afterMove(pl, pos) {
+    if (pos === LAST) { win(); return; }
+    openTask(pos);
+  }
+
+  // ---------- Задания ----------
+  var taskOverlay = $('#taskOverlay'), answersEl = $('#answers'), feedbackEl = $('#feedback');
+  var taskNextBtn = $('#taskNext'), taskBadgeEl = $('#taskBadge'), taskPlanetEl = $('#taskPlanet');
+  var taskTypeEl = $('#taskType'), taskQEl = $('#taskQ');
+  var STAR_SVG = '<svg viewBox="0 0 24 24" class="star-ic"><path fill="#ffd257" d="M12 2l2.9 6.2 6.6.8-4.9 4.6 1.3 6.6L12 17l-5.9 3.2 1.3-6.6L2.5 9l6.6-.8z"/></svg>';
+
+  function openTask(planetNum) {
+    G.state = 'task';
+    var pl = G.players[G.cur];
+    var p = PLANETS[planetNum - 1];
+    var q = genTask(TASK_MAP[planetNum]);
+    var ch = makeChoices(q);
+    G.q = { ans: q.ans, correctIdx: ch.correctIdx, answered: false };
+
+    taskBadgeEl.textContent = p.n;
+    taskBadgeEl.style.setProperty('--bc', BADGE_COLORS[(p.n - 1) % BADGE_COLORS.length]);
+    taskPlanetEl.textContent = 'Планета ' + p.n + ' · ' + p.name;
+    taskTypeEl.textContent = TASK_TYPE_LABEL[q.kind];
+    taskQEl.textContent = q.text;
+
+    answersEl.innerHTML = '';
+    ch.options.forEach(function (opt, i) {
+      var b = document.createElement('button');
+      b.className = 'ans-btn';
+      b.textContent = opt;
+      b.setAttribute('aria-label', 'Вариант ' + (i + 1));
+      b.addEventListener('click', function () { answer(i, b); });
+      answersEl.appendChild(b);
+    });
+    feedbackEl.className = 'feedback hidden';
+    feedbackEl.innerHTML = '';
+    taskNextBtn.classList.add('hidden');
+    taskOverlay.classList.remove('hidden');
+    updateHud();
+  }
+
+  function answer(idx, btn) {
+    if (!G.q || G.q.answered) return;
+    G.q.answered = true;
+    var pl = G.players[G.cur];
+    var btns = answersEl.querySelectorAll('.ans-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
+    btns[G.q.correctIdx].classList.add('correct');
+
+    if (idx === G.q.correctIdx) {
+      pl.correct++; pl.stars++;
+      S.ok(); S.star();
+      feedbackEl.className = 'feedback ok';
+      feedbackEl.innerHTML = pick(['Верно! Отличный полёт!', 'Правильно! Так держать, космонавт!', 'Точно в цель!']) +
+        ' Твоя награда — звезда.' + STAR_SVG;
+      setHint('Звезда поймана! Бросай кубик снова.');
+    } else {
+      pl.wrong++;
+      btn.classList.add('wrong');
+      S.no();
+      feedbackEl.className = 'feedback no';
+      feedbackEl.innerHTML = 'Не совсем. Правильный ответ: <b>' + G.q.ans + '</b>.<br>Ракета вернётся на одну планету назад.';
+      setHint('Возврат на одну планету назад.');
+    }
+    updateHud();
+    taskNextBtn.classList.remove('hidden');
+    taskNextBtn.focus();
+  }
+
+  taskNextBtn.addEventListener('click', function () {
+    taskOverlay.classList.add('hidden');
+    var pl = G.players[G.cur];
+    var wasWrong = pl.wrong > 0 && feedbackEl.className.indexOf('no') !== -1;
+    if (wasWrong) {
+      var target = Math.max(pl.pos - 1, 0);
+      S.back();
+      animateSeq(G.cur, [target], function () {
+        endTurn();
+      });
+    } else {
+      endTurn();
+    }
+  });
+
+  function endTurn() {
+    if (G.mode === 2) {
+      G.cur = 1 - G.cur;
+      updateHud();
+      setHint('Ракета №' + (G.cur + 1) + ' — бросай кубик!');
+    } else {
+      setHint(G.bounced ? 'На Землю нужно точное число — отскок назад! Бросай кубик.' : 'Бросай кубик — летим к планетам!');
+      G.bounced = false;
+    }
+    G.state = 'idle';
+    rollBtn.disabled = false;
+  }
+
+  // ---------- Победа ----------
+  var winOverlay = $('#winOverlay');
+  function win() {
+    G.state = 'won';
+    S.win();
+    var pl = G.players[G.cur];
+    var total = pl.correct + pl.wrong;
+    var acc = total ? pl.correct / total : 1;
+    var medal = acc >= 0.8 ? 'Звание: Золотой космонавт' : (acc >= 0.5 ? 'Звание: Серебряный космонавт' : 'Звание: Юный космонавт');
+    $('#winTitle').textContent = G.mode === 2 ? 'Победа Ракеты №' + (G.cur + 1) + '!' : 'Миссия выполнена!';
+    $('#winSub').textContent = G.mode === 2
+      ? 'Ракета №' + (G.cur + 1) + ' первой приземлилась на Земле!'
+      : 'Ты пролетел все 20 планет и приземлился на Земле!';
+    $('#winStats').innerHTML =
+      '<div class="stat"><b>' + pl.stars + '</b><span>звёзд собрано</span></div>' +
+      '<div class="stat"><b>' + pl.correct + '</b><span>верных ответов</span></div>' +
+      '<div class="stat"><b>' + pl.wrong + '</b><span>ошибок</span></div>';
+    $('#winMedal').textContent = medal;
+    setTimeout(function () { winOverlay.classList.remove('hidden'); }, 500);
+  }
+
+  // ---------- Старт / рестарт ----------
+  function startGame(mode) {
+    G.mode = mode;
+    G.players = [{ pos: 0, stars: 0, correct: 0, wrong: 0 }];
+    if (mode === 2) G.players.push({ pos: 0, stars: 0, correct: 0, wrong: 0 });
+    G.cur = 0;
+    G.bounced = false;
+    G.state = 'idle';
+
+    rocketEls[1].classList.toggle('hidden', mode !== 2);
+    setRocket(0, 0, true);
+    setRocket(1, 0, true);
+    relaxRocket(0); relaxRocket(1);
+    lit(null);
+    diceNumEl.textContent = '?';
+    cubeEl.style.transform = 'rotateX(-18deg) rotateY(24deg)';
+    updateHud();
+    setHint(mode === 2 ? 'Ракета №1 — бросай кубик!' : 'Бросай кубик — летим к планетам!');
+    rollBtn.disabled = false;
+    $('#startOverlay').classList.add('hidden');
+    winOverlay.classList.add('hidden');
+  }
+
+  // ---------- События ----------
+  rollBtn.addEventListener('click', rollDice);
+
+  $('#startBtn').addEventListener('click', function () { ac(); startGame(G.modeSel); });
+  document.querySelectorAll('.mode-btn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.mode-btn').forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      G.modeSel = parseInt(b.getAttribute('data-mode'), 10);
+    });
+  });
+  $('#againBtn').addEventListener('click', function () { startGame(G.mode); });
+  $('#menuBtn').addEventListener('click', function () {
+    winOverlay.classList.add('hidden');
+    G.state = 'menu';
+    $('#startOverlay').classList.remove('hidden');
+  });
+  $('#restartBtn').addEventListener('click', function () {
+    if (G.state === 'menu') return;
+    startGame(G.mode);
+    setHint('Полёт начат заново! Бросай кубик.');
+  });
+  $('#rulesBtn').addEventListener('click', function () { $('#rulesOverlay').classList.remove('hidden'); });
+  $('#rulesClose').addEventListener('click', function () { $('#rulesOverlay').classList.add('hidden'); });
+  $('#rulesOverlay').addEventListener('click', function (e) {
+    if (e.target === this) this.classList.add('hidden');
+  });
+  $('#soundBtn').addEventListener('click', function () {
+    G.sound = !G.sound;
+    this.querySelector('.snd-on').style.display = G.sound ? '' : 'none';
+    this.querySelector('.snd-off').style.display = G.sound ? 'none' : '';
+    if (G.sound) beep(700, 0.1, 'sine', 0.1);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (G.state === 'task' && !G.q.answered && e.key >= '1' && e.key <= '4') {
+      var btns = answersEl.querySelectorAll('.ans-btn');
+      var i = parseInt(e.key, 10) - 1;
+      if (btns[i]) btns[i].click();
+    }
+    if (e.key === 'Escape') $('#rulesOverlay').classList.add('hidden');
+  });
+
+  // ---------- Инициализация ----------
+  fit();
+  setRocket(0, 0, true);
+  updateHud();
+  rollBtn.disabled = true;
+})();
+
+</script>
+</body>
+</html>
